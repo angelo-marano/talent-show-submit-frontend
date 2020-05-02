@@ -13,6 +13,8 @@
     "node-sass": "^4.13.1",
     "react": "^16.13.0",
     "react-dom": "^16.13.0",
+    "react-google-recaptcha": "^2.0.1",
+    "react-google-recaptcha-v3": "^1.4.1",
     "react-helmet": "^5.2.1",
     "react-scroll-to-element": "^0.2.0",
     "react-scrollspy": "^3.4.2",

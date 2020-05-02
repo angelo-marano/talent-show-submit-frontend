@@ -1,28 +1,76 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react';
 import * as axios from 'axios';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const SubmissionForm = props => {
-  
-  const postUrl = 'https://ln9yjsa4wi.execute-api.us-east-1.amazonaws.com/dev/submission';
+  const baseUrl = 'https://ln9yjsa4wi.execute-api.us-east-1.amazonaws.com/dev/';
   const fileInput = React.createRef();
-  
+
+  const onCaptchaChange = e => {
+    console.log('captcha change event', e);
+  };
+
+  useEffect(() => {
+    setDisable(validateState());
+  }, [submission]);
+
   const [submission, setSubmission] = useState({
     firstName: '',
     lastName: '',
     email: '',
     title: '',
     notes: '',
-    s3Path: ''
-  })
+    s3Path: '',
+    captcha: '',
+  });
 
-  const onSubmit = async e => {
-    e.preventDefault()
+  const [disable, setDisable] = useState(true);
+  const [isDirty, setIsDirty] = useState(false);
+
+  const onSubmit = e => {
+    e.preventDefault();
+
+    debugger;
+
     const file = fileInput.current.files[0];
-    const postData = JSON.stringify(submission);
-    const response = await axios.post(postUrl, submission);
 
-    alert(JSON.stringify(response));
-  }
+    const metadata = {
+      'submission-details': JSON.stringify(submission),
+    };
+
+    const uploadUrlRequest = {
+      name: file.name,
+      type: file.type,
+      metadata: metadata,
+    };
+
+    const uploadUrl = baseUrl + 'uploadUrl';
+
+    axios
+      .post(uploadUrl, uploadUrlRequest)
+      .then(requestUploadUrlResponse => {
+        console.log('request upload url response', requestUploadUrlResponse);
+        const options = { headers: { 'Content-Type': file.type, ...metadata } };
+        return axios.put(
+          requestUploadUrlResponse.data.uploadURL,
+          file,
+          options
+        );
+      })
+      .then(response => {
+        alert(JSON.stringify(response));
+      })
+      .catch(error => {
+        alert('There was a problem submitting your video');
+        alert(JSON.stringify(error));
+        console.error(error);
+      });
+  };
+
+  const validateState = () => {
+    const { firstName, lastName, email, title, captcha } = submission;
+    return firstName && lastName && email && title && captcha;
+  };
 
   return (
     <form onSubmit={onSubmit}>
@@ -69,15 +117,18 @@ const SubmissionForm = props => {
         onChange={e => setSubmission({ ...submission, notes: e.target.value })}
       ></textarea>
 
-      <input type="file" name="file" id="file" ref={fileInput}>
+      <input type="file" name="file" id="file" ref={fileInput}></input>
 
-      </input>
+      <ReCAPTCHA
+        sitekey="6LehGPEUAAAAAORH3KkO0xE40zT7VERLJd0njxzS"
+        onChange={onCaptchaChange}
+      />
 
-      <button className="button" type="submit">
+      <button disabled={disable} className="button" type="submit">
         Submit
       </button>
     </form>
-  )
-}
+  );
+};
 
-export default SubmissionForm
+export default SubmissionForm;
