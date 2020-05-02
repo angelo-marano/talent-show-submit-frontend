@@ -17,6 +17,10 @@ class Index extends React.Component {
     }
   }
 
+  sectionStyle = {
+    marginTop: "50px"
+  }
+
   _handleWaypointEnter = () => {
     this.setState(() => ({ stickyNav: false }))
   }
@@ -36,7 +40,7 @@ class Index extends React.Component {
         ></Waypoint>
 
         <div id="main">
-          <section id="intro" className="main">
+          <section id="intro" className="main" style={this.sectionStyle}>
             <div className="spotlight">
               <div className="content">
                 <header className="major">

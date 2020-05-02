@@ -16,6 +16,7 @@
     "react-google-recaptcha": "^2.0.1",
     "react-google-recaptcha-v3": "^1.4.1",
     "react-helmet": "^5.2.1",
+    "react-responsive-modal": "^5.0.2",
     "react-scroll-to-element": "^0.2.0",
     "react-scrollspy": "^3.4.2",
     "react-step-wizard": "^5.3.2",
