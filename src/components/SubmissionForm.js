@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as axios from 'axios';
 import ReCAPTCHA from 'react-google-recaptcha';
 import 'react-responsive-modal/styles.css';
 import { Modal } from 'react-responsive-modal';
+import { useDropzone } from 'react-dropzone';
 
-const SubmissionForm = props => {
+const SubmissionForm = () => {
   const validExtensions = [
     'MPEG',
     'MPE',
@@ -18,9 +19,13 @@ const SubmissionForm = props => {
   ];
 
   const baseUrl = 'https://ln9yjsa4wi.execute-api.us-east-1.amazonaws.com/dev/';
-  const fileInput = React.createRef();
+  
+  const smallStyle = {
+    fontSize : '10px',
+    color: 'red'
+  };
 
-  const onCaptchaChange = e => setSubmission({...submission, captcha : e});
+  const onCaptchaChange = e => setSubmission({ ...submission, captcha: e });
 
   const [submission, setSubmission] = useState({
     firstName: '',
@@ -28,35 +33,45 @@ const SubmissionForm = props => {
     email: '',
     title: '',
     notes: '',
-    s3Path: '',
+    file: null,
     captcha: '',
   });
 
   const [disable, setDisable] = useState(true);
   const [validationErrors, setValidationErrors] = useState({});
   const [open, setOpen] = useState(false);
-  const [modalMessage, setModalMessage] = useState("");
+  const [modalMessage, setModalMessage] = useState('');
+
+  const onDrop = acceptedFiles => {
+    const file = acceptedFiles[0];
+    setSubmission({ ...submission, file: file });
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   useEffect(() => {
     setValidationErrors(validateState());
-    setDisable(Object.keys(validationErrors).length > 0);
   }, [submission]);
+
+  useEffect(() => {
+    setDisable(Object.keys(validationErrors).length);
+  }, [validationErrors])
 
   const getExtension = filename => filename.split('.').pop();
 
   const onCloseModal = () => {
     setSubmission({});
     setOpen(false);
-    setModalMessage("");
-  }
+    setModalMessage('');
+  };
 
   const onSubmit = e => {
     e.preventDefault();
-    
-    setModalMessage("We are uploading your submission! Please stand by...");
+
+    setModalMessage('We are uploading your submission! Please stand by...');
     setOpen(true);
 
-    const file = fileInput.current.files[0];
+    const file = submission.file;
 
     const metadata = {
       'submission-details': JSON.stringify(submission),
@@ -81,11 +96,11 @@ const SubmissionForm = props => {
           options
         );
       })
-      .then(response => {
-        setModalMessage("Successfully submitted! Thank you!")
+      .then(() => {
+        setModalMessage('Successfully submitted! Thank you!');
       })
       .catch(error => {
-        setModalMessage("There was a problem submitting your video.");
+        setModalMessage('There was a problem submitting your video.');
         console.error(error);
       });
   };
@@ -93,7 +108,7 @@ const SubmissionForm = props => {
   const validateState = () => {
     let errors = {};
 
-    const { firstName, lastName, email, title, captcha } = submission;
+    const { firstName, lastName, email, file, captcha } = submission;
 
     if (!firstName) {
       errors['firstName'] = 'First Name is required.';
@@ -111,8 +126,6 @@ const SubmissionForm = props => {
       errors['captcha'] = 'Captcha is required.';
     }
 
-    const file = fileInput.current.files[0];
-
     if (!file) {
       errors['file'] = 'File is required.';
     } else {
@@ -125,14 +138,14 @@ const SubmissionForm = props => {
         )}`;
       }
     }
-
+    console.log("errors", errors);
     return errors;
   };
 
   return (
     <form onSubmit={onSubmit}>
       <label htmlFor="firstName">
-        First Name <small>required</small>
+        First Name <small style={smallStyle}>required</small>
       </label>
       <input
         required
@@ -145,7 +158,7 @@ const SubmissionForm = props => {
       ></input>
 
       <label htmlFor="lastName">
-        Last Name <small>required</small>
+        Last Name <small style={smallStyle}>required</small>
       </label>
       <input
         required
@@ -158,7 +171,7 @@ const SubmissionForm = props => {
       ></input>
 
       <label htmlFor="email">
-        Email <small>required</small>
+        Email <small style={smallStyle}>required</small>
       </label>
       <input
         required
@@ -169,7 +182,7 @@ const SubmissionForm = props => {
       ></input>
 
       <label htmlFor="title">
-        Title <small>required</small>
+        Title <small style={smallStyle}>required</small>
       </label>
       <input
         required
@@ -180,7 +193,7 @@ const SubmissionForm = props => {
       ></input>
 
       <label htmlFor="notes">
-        Notes <small>optional</small>
+        Notes <small style={smallStyle}>optional</small>
       </label>
       <textarea
         id="notes"
@@ -190,12 +203,31 @@ const SubmissionForm = props => {
 
       <label htmlFor="file">
         File{' '}
-        <small>
+        <small style={smallStyle}>
           required, (must be one of the following: {validExtensions.join(', ')})
         </small>
       </label>
-      
-      <input type="file" name="file" id="file" ref={fileInput}></input>
+
+      <div
+        {...getRootProps({
+          multiple: false
+        })}
+      >
+        <input {...getInputProps()} />
+        {isDragActive ? (
+          <p>Drop the file here ...</p>
+        ) : (
+          <p>Drag and drop a file here, or click to select file.</p>
+        )}
+      </div>
+
+      <div>
+        {submission.file ? (
+          <p> {submission.file.name} </p>
+        ) : (
+          <p> No file selected... </p>
+        )}
+      </div>
 
       <ReCAPTCHA
         sitekey="6LehGPEUAAAAAORH3KkO0xE40zT7VERLJd0njxzS"
@@ -207,7 +239,9 @@ const SubmissionForm = props => {
       </button>
 
       <Modal open={open} onClose={onCloseModal} center>
-        <h2>{modalMessage}</h2>
+        <div style={{marginTop: '30px'}}>
+          <p style={{color: 'black'}}>{modalMessage}</p>
+        </div>
       </Modal>
     </form>
   );

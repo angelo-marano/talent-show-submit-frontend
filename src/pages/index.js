@@ -1,13 +1,8 @@
-import { Link } from 'gatsby'
 import React from 'react'
 import Helmet from 'react-helmet'
 import { Waypoint } from 'react-waypoint'
-import pic01 from '../assets/images/pic01.jpg'
-import Header from '../components/Header'
 import Layout from '../components/layout'
-import Nav from '../components/Nav'
 import SubmissionForm from '../components/SubmissionForm'
-import StepWizard from "react-step-wizard";
 
 class Index extends React.Component {
   constructor(props) {
